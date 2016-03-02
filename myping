@@ -1,0 +1,125 @@
+#!/bin/bash
+# myping by Terence Yang
+# wrapper for ping that checks
+# for unresponding/unknown hosts 
+# and sorts multiple pings by
+# average ping roundtrip time.
+# CS 160B
+# Peter Wood
+
+#set path explicitly
+export PATH=/usr/bin:/bin:usr/sbin
+
+#Usage message
+Usage=$"myping [-w] [-p npack] -h host1  [  host2   host3  ... ]
+
+OPTIONS
+-w
+	print warning message to run traceroute for any non-responding host.
+-p npack[$default = (5)]
+	Stop after sending [INTEGER]pack ECHO_REQUEST packets.
+	myping waits for [INTEGER]pack ECHO_REPLY packets.
+-h 
+	Any number of destinations seperated by a space. "
+
+#error function prints arguments then USAGE message
+function error {
+	echo "$@"
+	echo "$Usage"
+	return 1
+}					
+
+#Sanity check
+if [ $# -lt 2 ]
+	then
+		echo "Too few arguments "
+		error
+		exit
+fi
+
+#Initialize boolean flags, probably don't need this though
+pflag=false
+wflag=false
+hflag=false
+
+#check/get arguments
+while true; do
+    case $1 in
+         "-p") npack=$2 #if -p, sets npack to $2 and shifts 2
+             pflag=true
+             shift 2
+             ;;
+         "-w") wflag=true # if -2 is detected, flag is set to true
+             shift 1
+             ;;
+         "-h") hflag=true # Makes sure -h is in arguments
+			 shift 1
+			 break
+             ;;
+          	*) if [ "$hflag" != true ]; #if -h is not there, then throw error
+					then
+						echo "at least -h and host arguments needed "
+			   fi
+			   error
+			   exit
+			   ;;
+    esac
+done
+
+if [ "$pflag" != true ] #if npacks is not specified, npacks set to 5
+	then
+		npack=$((5))
+fi
+
+integer='^[0-9]+$' #integer regex
+if ! [[ $npack =~ $integer ]] ; #make sure npack is an integer
+	then
+		echo "npack must be an integer "
+		error
+		exit
+fi
+
+echo "---List of problem hosts---" > problemhosts #initialize problemhosts file
+
+#for hosts in argument list
+for var in "$@"
+do
+	echo -n "$var, " > pingsumms #put host in pingsumms file
+	ping -c "$npack" "$var" &> pingfile # put raw ping data in pingfile
+	if grep -q "unknown host" pingfile || grep -q "0 received" pingfile; # if unresponding or unknown hosts detected
+		then
+			if [ "$wflag" == true ] && grep -q "0 received" pingfile; # if w flag is there and for each unresponding hosts
+				then
+					echo -n "WARNING traceroute can find network congestion for: " >> problemhosts #put warning message
+			fi
+			if grep -q "unknown host" pingfile;
+				then
+					echo -n "unknown host: " >> problemhosts
+			fi
+			echo "$var" >> problemhosts	#print hostname to problemhosts
+		else		
+			# delete pingfile output from beginning to last '---' then remove all newlines and replace with space and append to pingsumms
+			sed '1,/---/d' pingfile | tr "\n" " "  >> pingsumms
+			# output hostname, # of packets sent, # of packets lost, min/avg/max time per packet to sortping 
+    		cut -f 1-2,4-5 -d ',' pingsumms >> sortping
+    fi
+done
+
+if [ -e sortping ] ; #if sortping exists
+	then
+		#sort by average time(second number field with delimiter being /)
+		sort -t '/' -k6 -n sortping 
+		rm sortping
+fi
+
+# display problemhosts after and remove intermediary files
+cat problemhosts
+rm problemhosts
+rm pingfile
+rm pingsumms
+
+exit
+
+
+
+

@@ -1,0 +1,46 @@
+#!/bin/bash
+# simple version of unix head command
+# by Terence Yang
+count=$((10))
+
+#sanity check
+if [ $# -lt 1 ] || [ $# -gt 4 ]
+then
+    echo "wrong number of arguments, usage: head2 [ -c ] [ -p num ] filename "
+    exit
+fi
+
+# case statements
+while true; do
+    case $1 in
+         "-p") count=$2 #if -p, sets counter to $2 and shifts 2
+             shift 2
+             ;;
+         "-c") linenumb=true # if -c is detected, linenumb is set to true
+             numb=$((1)) #linenumber counter
+             shift 1
+             ;;
+          *) break
+             ;;
+    esac
+done
+
+while read line #read file
+do
+#exit if EOF is reached
+    if [ "$linenumb" = true ] 
+    then
+        echo "line$numb: $line" #print line number if its true
+        ((numb+=1))
+    else
+        echo "$line" #print line
+    fi
+
+    if [ $count -eq 0 ] # if counter is reached, exit.
+    then
+        exit
+    fi
+    ((count-=1))
+
+done < $1
+exit

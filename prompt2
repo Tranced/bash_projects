@@ -1,0 +1,53 @@
+#prompt2 assignment by Terence Yang
+#Catches user input and stores it into an array if matched with case switches
+
+
+#initialize array count
+arraycount=$((0))
+
+#prompt loop
+
+while true; do
+	echo -e "What's your preferred order of dinner courses?(soup, salad, entree, dessert, appetizer,or quit) \n"
+    read courses
+    case $courses in
+    	#relevant cases append $courses to each array index
+    	soup) echo -e "Warms your stomach!\n"
+					echo "$USER `date` $courses" >> log.prompt2.txt
+					array["$arraycount"]="$courses" 
+					((arraycount+=1))
+					;;
+		salad) echo -e "A palate cleanser or just on a diet?\n"
+					echo "$USER `date` $courses" >> log.prompt2.txt
+					array["$arraycount"]="$courses"
+					((arraycount+=1))
+					;;
+		dessert) echo -e "Going straight to the guilty pleasures!\n"
+					echo "$USER `date` $courses" >> log.prompt2.txt
+					array["$arraycount"]="$courses"
+					((arraycount+=1))
+					;;
+		appetizer) echo -e "Gets the appetite going\n"
+					echo "$USER `date` $courses" >> log.prompt2.txt
+					array["$arraycount"]="$courses"
+					((arraycount+=1))
+					;;
+		entree) echo -e "The main meal!\n"
+					echo "$USER `date` $courses" >> log.prompt2.txt
+					array["$arraycount"]="$courses"
+					((arraycount+=1))
+					;;
+		# Goes through array and prints out elements
+		quit) echo -e "thank you\n"
+		 			for i in ${array[@]}; do
+		 				echo $i;
+		 			done
+		 	   		echo -e "$USER `date` $courses\n" >> log.prompt2.txt
+					exit
+					;;
+		#Checks mismatch last
+		*) echo -e "could you tell me again?\n"
+					echo "$USER `date` $courses" >> log.prompt2.txt
+					;;
+	esac
+done

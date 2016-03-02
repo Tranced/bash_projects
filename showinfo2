@@ -1,0 +1,78 @@
+#!/bin/bash
+# basic show info script by Terence Yang
+# showinfo sorts a file with 5 fields seperated by a #
+# sorts  record-id#fname lname#office#email#job
+# getopts -njero
+default=true
+while getopts njero: option
+do
+	case "$option"
+		in 
+			n) default=true #sort by name
+			   job=false
+			   email=false
+			;;
+			j) job=true #sort by job
+			   email=false
+			   default=false
+			;;
+			e) email=true #sort by email
+			   default=false
+			   job=false
+			;;
+			r) reverse=true #reverse sort
+			;;
+			o) outtofile=true #output file is outfile
+			   OPTIND=$((OPTIND - 1))
+			;;
+			\?) default=true
+				job=false
+				email=false
+				echo " Usage: showinfo2 [-n] [-j] [-e] [-r] [-o]
+				-n sort file by #name. This is the default sort
+				-j sort file by #job.
+				-e sort file by #email
+				-r reverse sort
+				-o output to outfile "
+				exit 1
+			;;
+	esac
+done
+
+shiftcount=$((OPTIND - 1)) #shift count by options
+shift $shiftcount # shift option amount
+
+
+# sorts each file line by alphabetical order depending on fields seperated by hashtag
+
+if [ "$email" = true ];
+then
+    sort -t '#' -k4 -d $1 > output
+elif [ "$job" = true ];
+then
+    sort -t '#' -k5 -d $1 > output
+else
+    sort -t '#' -k2 -d $1 > output #sort by default
+fi
+
+
+#reverses sort output
+if [ "$reverse" = true ];
+then
+	tac output > reversed
+	cat reversed > output
+	rm reversed
+fi
+
+#outputs to file
+#else run sort commands and output to stdout
+if [ "$outtofile" = true ];
+then
+	cat output > outfile
+else
+	cat output
+fi
+
+rm output
+
+exit 1
